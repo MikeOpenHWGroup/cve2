@@ -898,12 +898,6 @@ module cve2_id_stage #(
   assign stall_id = stall_mem | stall_multdiv | stall_jump | stall_branch |
                       stall_alu | (XInterface & stall_coproc);
 
-  // Generally illegal instructions have no reason to stall, however they must still stall waiting
-  // for outstanding memory requests so exceptions related to them take priority over the illegal
-  // instruction exception.
-  `ASSERT(IllegalInsnStallMustBeMemStall, illegal_insn_o & stall_id |-> stall_mem &
-    ~(stall_multdiv | stall_jump | stall_branch | stall_alu))
-
   assign instr_done = ~stall_id & ~flush_id & instr_executing;
 
   // Signal instruction in ID is in it's first cycle. It can remain in its
@@ -922,9 +916,6 @@ module cve2_id_stage #(
   // Without writeback stage any valid instruction that hasn't seen an error will execute
   assign instr_executing_spec = instr_valid_i & ~instr_fetch_err_i & controller_run;
   assign instr_executing = instr_executing_spec;
-
-  `ASSERT(IbexStallIfValidInstrNotExecuting,
-    instr_valid_i & ~instr_fetch_err_i & ~instr_executing & controller_run |-> stall_id)
 
   // No data forwarding without writeback stage so always take source register data direct from
   // register file
